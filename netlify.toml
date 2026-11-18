@@ -1,0 +1,21 @@
+# Netlify builds the web app from the repo root (pnpm workspace).
+[build]
+  command = "pnpm --filter @app/web... build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# API proxy: the browser calls https://<site>.netlify.app/api/* (same origin, HTTPS)
+# and Netlify forwards to the EC2 instance. Replace the IP with your Elastic IP.
+[[redirects]]
+  from = "/api/*"
+  to = "http://EC2_ELASTIC_IP/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
