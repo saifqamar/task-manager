@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { TaskList } from '@/components/tasks/TaskList';
+import { WeatherWidget } from '@/components/weather/WeatherWidget';
 import { errorMessage } from '@/lib/api';
 import { useTaskStore } from '@/store/task-store';
 
@@ -23,6 +24,7 @@ export default function App() {
             <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
             <p className="text-muted-foreground text-sm">Plan it, do it, tick it off.</p>
           </div>
+          <WeatherWidget />
         </header>
 
         <section aria-label="Add a task" className="mb-6">

@@ -11,9 +11,12 @@ import { prismaPlugin } from './plugins/prisma.js';
 import { securityPlugin } from './plugins/security.js';
 import { createTaskRepository } from './repositories/task.repository.js';
 import { createTaskService } from './services/task.service.js';
+import { createWeatherService } from './services/weather.service.js';
 import { createTaskController } from './controllers/task.controller.js';
+import { createWeatherController } from './controllers/weather.controller.js';
 import { healthRoutes } from './routes/health.routes.js';
 import { taskRoutes } from './routes/task.routes.js';
+import { weatherRoutes } from './routes/weather.routes.js';
 
 export interface BuildAppOptions {
   env: Env;
@@ -24,7 +27,13 @@ export interface BuildAppOptions {
   rateLimit?: boolean;
 }
 
-export async function buildApp({ env, logger = false, prisma, rateLimit = true }: BuildAppOptions) {
+export async function buildApp({
+  env,
+  logger = false,
+  prisma,
+  fetch,
+  rateLimit = true,
+}: BuildAppOptions) {
   const app = Fastify({ logger, trustProxy: true }).withTypeProvider<ZodTypeProvider>();
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
@@ -37,9 +46,13 @@ export async function buildApp({ env, logger = false, prisma, rateLimit = true }
 
   // Wiring: repository → service → controller → routes
   const taskController = createTaskController(createTaskService(createTaskRepository(client)));
+  const weatherController = createWeatherController(
+    createWeatherService({ apiKey: env.OPENWEATHER_API_KEY, fetch, logger: app.log }),
+  );
 
   await app.register(healthRoutes);
   await app.register(taskRoutes, { prefix: '/api', controller: taskController });
+  await app.register(weatherRoutes, { prefix: '/api', controller: weatherController });
 
   return app;
 }

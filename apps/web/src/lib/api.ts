@@ -2,10 +2,12 @@ import {
   apiErrorSchema,
   taskListSchema,
   taskSchema,
+  weatherSchema,
   type CreateTaskInput,
   type ErrorCode,
   type Task,
   type UpdateTaskInput,
+  type Weather,
 } from '@app/shared';
 import type { z } from 'zod';
 
@@ -57,6 +59,9 @@ export const api = {
     request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(input) }, taskSchema),
 
   deleteTask: (id: string) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
+
+  getWeather: (city: string) =>
+    request<Weather>(`/weather?city=${encodeURIComponent(city)}`, { method: 'GET' }, weatherSchema),
 };
 
 export function errorMessage(error: unknown): string {

@@ -13,6 +13,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
       createTask: vi.fn(),
       updateTask: vi.fn(),
       deleteTask: vi.fn(),
+      getWeather: vi.fn(),
     },
   };
 });
