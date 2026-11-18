@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.env
+**/coverage
+apps/api/src/generated
+.git
+.github
+docs
+apps/web

@@ -1,0 +1,36 @@
+# Production stack on EC2. Used by deploy/deploy.sh.
+# Requires /opt/task-app/.env (see docs/specs/07-infrastructure-deployment.md).
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  api:
+    image: ${ECR_REPO:?ECR_REPO is required}:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '80:3000'
+    logging: *logging
+
+volumes:
+  pgdata:
