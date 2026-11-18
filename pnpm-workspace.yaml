@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Dependencies allowed to run install scripts.
+allowBuilds:
+  esbuild: true
+  # Engines are fetched on demand by the Prisma CLI; skip the postinstall download.
+  '@prisma/engines': false
+  prisma: false
