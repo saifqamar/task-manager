@@ -56,7 +56,6 @@ The browser only ever talks to the Netlify origin. API calls use relative URLs (
 │  │  └─ package.json
 │  └─ web/
 │     ├─ src/ (see 05-frontend)
-│     ├─ netlify.toml
 │     └─ package.json
 ├─ packages/
 │  └─ shared/
@@ -68,7 +67,7 @@ The browser only ever talks to the Netlify origin. API calls use relative URLs (
 ├─ deploy/
 │  ├─ docker-compose.prod.yml
 │  └─ deploy.sh                        # run on EC2 by SSM
-├─ docker-compose.yml                  # local dev: postgres (+ optional api)
+├─ netlify.toml                        # Netlify build + /api proxy
 ├─ .github/workflows/{ci.yml, deploy-api.yml}
 ├─ docs/specs/
 ├─ pnpm-workspace.yaml
@@ -78,13 +77,13 @@ The browser only ever talks to the Netlify origin. API calls use relative URLs (
 
 ## Backend layering (MVC)
 
-| Layer | Responsibility | Must NOT |
-|---|---|---|
-| **Route** | Declare method, URL, Zod schemas (params/body/response), bind controller | Contain logic |
-| **Controller** | Read validated request, call service, set status code, send reply | Touch Prisma or cache |
-| **Service** | Business rules, cache read/invalidate, throw domain errors (`NotFoundError`) | Know about HTTP request/reply |
-| **Repository** | Prisma queries only; translate Prisma "record not found" (P2025) to `null`/`NotFoundError` | Contain business rules |
-| **Model** | Prisma schema + shared Zod types | — |
+| Layer          | Responsibility                                                                             | Must NOT                      |
+| -------------- | ------------------------------------------------------------------------------------------ | ----------------------------- |
+| **Route**      | Declare method, URL, Zod schemas (params/body/response), bind controller                   | Contain logic                 |
+| **Controller** | Read validated request, call service, set status code, send reply                          | Touch Prisma or cache         |
+| **Service**    | Business rules, cache read/invalidate, throw domain errors (`NotFoundError`)               | Know about HTTP request/reply |
+| **Repository** | Prisma queries only; translate Prisma "record not found" (P2025) to `null`/`NotFoundError` | Contain business rules        |
+| **Model**      | Prisma schema + shared Zod types                                                           | —                             |
 
 Dependencies are created in `buildApp()` and passed down (simple constructor/factory injection), so tests can swap the repository or `fetch`.
 
@@ -97,10 +96,12 @@ route ─▶ controller ─▶ service ─▶ repository ─▶ Prisma ─▶ Po
 ## Request flow examples
 
 **GET /api/tasks**
+
 1. Route validates nothing (no input), controller calls `taskService.list()`.
 2. Service checks cache key `tasks:all`. Hit → return. Miss → repository `findMany` ordered by `createdAt desc` → store in cache (TTL 60s) → return.
 
 **PATCH /api/tasks/:id**
+
 1. Route validates `id` (uuid) and body (`UpdateTaskInput`) → 400 on failure.
 2. Service calls repository update; missing row → `NotFoundError` → 404.
 3. On success service invalidates `tasks:all`, returns the updated task.
@@ -111,18 +112,18 @@ route ─▶ controller ─▶ service ─▶ repository ─▶ Prisma ─▶ Po
 
 ```ts
 class MemoryCache<T> {
-  constructor(opts: { ttlMs: number; maxEntries?: number })
-  get(key: string): T | undefined   // expired entries treated as miss and removed
-  set(key: string, value: T): void  // evicts oldest entry when maxEntries exceeded
-  delete(key: string): void
-  clear(): void
+  constructor(opts: { ttlMs: number; maxEntries?: number });
+  get(key: string): T | undefined; // expired entries treated as miss and removed
+  set(key: string, value: T): void; // evicts oldest entry when maxEntries exceeded
+  delete(key: string): void;
+  clear(): void;
 }
 ```
 
-| Cache instance | Key | TTL | Max entries | Invalidated by |
-|---|---|---|---|---|
-| Task list | `tasks:all` | 60 s | 1 | Any create / update / delete |
-| Weather | `weather:<city lowercased, trimmed>` | 10 min | 100 | TTL only |
+| Cache instance | Key                                  | TTL    | Max entries | Invalidated by               |
+| -------------- | ------------------------------------ | ------ | ----------- | ---------------------------- |
+| Task list      | `tasks:all`                          | 60 s   | 1           | Any create / update / delete |
+| Weather        | `weather:<city lowercased, trimmed>` | 10 min | 100         | TTL only                     |
 
 Known limitation (documented in README): per-process cache. With multiple API instances, writes on one instance would not invalidate others → use Redis or remove the cache. The 60 s TTL bounds staleness even then.
 

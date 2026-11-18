@@ -2,18 +2,19 @@
 
 ## Engine
 
-PostgreSQL (official `postgres` Docker image, current major, `-alpine` variant) — same image locally, in CI and on EC2.
+PostgreSQL. Locally: a natively installed server (14+). CI and EC2: the official `postgres:17-alpine` Docker image.
 
 ## Prisma schema
 
 ```prisma
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"            // Prisma 7 generator
+  output       = "../src/generated/prisma"  // generated client lives in the app (git-ignored)
+  moduleFormat = "esm"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"                   // URL comes from prisma.config.ts
 }
 
 model Task {
@@ -29,18 +30,18 @@ model Task {
 }
 ```
 
-> The generator/config block is adjusted at scaffold time to match the current Prisma major version's conventions.
+> Prisma 7: the connection URL lives in `apps/api/prisma.config.ts`, and the client connects through the `@prisma/adapter-pg` driver adapter (node-postgres).
 
 ## Resulting table (for the README)
 
-| Column | Type | Null | Default | Notes |
-|---|---|---|---|---|
-| `id` | `uuid` | no | generated | Primary key |
-| `title` | `varchar(200)` | no | — | Trimmed, 1–200 chars (enforced by API) |
-| `description` | `varchar(1000)` | yes | `NULL` | Optional |
-| `completed` | `boolean` | no | `false` | |
-| `created_at` | `timestamp(3)` | no | `now()` | Indexed; list order |
-| `updated_at` | `timestamp(3)` | no | — | Set by Prisma on every update |
+| Column        | Type            | Null | Default   | Notes                                  |
+| ------------- | --------------- | ---- | --------- | -------------------------------------- |
+| `id`          | `uuid`          | no   | generated | Primary key                            |
+| `title`       | `varchar(200)`  | no   | —         | Trimmed, 1–200 chars (enforced by API) |
+| `description` | `varchar(1000)` | yes  | `NULL`    | Optional                               |
+| `completed`   | `boolean`       | no   | `false`   |                                        |
+| `created_at`  | `timestamp(3)`  | no   | `now()`   | Indexed; list order                    |
+| `updated_at`  | `timestamp(3)`  | no   | —         | Set by Prisma on every update          |
 
 ## Decisions
 

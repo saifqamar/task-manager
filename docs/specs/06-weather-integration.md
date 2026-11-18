@@ -42,12 +42,12 @@ Units: °C, m/s. Icon rendered by the frontend as `https://openweathermap.org/im
 3. Call OpenWeather with native `fetch` and `AbortSignal.timeout(5000)`; city is URL-encoded.
 4. Map upstream result:
 
-| Upstream | Our response |
-|---|---|
-| 200 | Validate with a Zod schema of the fields we use → map → cache → 200 |
-| 404 | 404 `CITY_NOT_FOUND` (not cached) |
-| 401 (bad/inactive key) | 502 `UPSTREAM_ERROR`; logged at `error` level |
-| 429 / 5xx / timeout / network error / unexpected shape | 502 `UPSTREAM_ERROR`; logged |
+| Upstream                                               | Our response                                                        |
+| ------------------------------------------------------ | ------------------------------------------------------------------- |
+| 200                                                    | Validate with a Zod schema of the fields we use → map → cache → 200 |
+| 404                                                    | 404 `CITY_NOT_FOUND` (not cached)                                   |
+| 401 (bad/inactive key)                                 | 502 `UPSTREAM_ERROR`; logged at `error` level                       |
+| 429 / 5xx / timeout / network error / unexpected shape | 502 `UPSTREAM_ERROR`; logged                                        |
 
 `fetch` is injected into the service so tests can stub it.
 

@@ -25,35 +25,35 @@ React + Vite + TypeScript, shadcn/ui components (Tailwind), Zustand for state. S
 
 ## Components
 
-| Component | Responsibility | shadcn parts |
-|---|---|---|
-| `App` | Layout, triggers initial `fetchTasks()` | — |
-| `WeatherWidget` | Current weather for a city, change city | Card, Input, Popover, Skeleton |
-| `TaskForm` | Create a task; reused inside edit dialog | Input, Textarea, Button |
-| `TaskFilters` | All / Active / Completed with counts | Tabs |
-| `TaskList` | Renders filtered tasks; loading/empty/error states | Skeleton |
-| `TaskItem` | Checkbox toggle, title/description, edit & delete actions | Checkbox, Button |
-| `EditTaskDialog` | Edit title/description | Dialog |
-| `DeleteTaskDialog` | Confirm deletion | AlertDialog |
-| Toaster | Success/error notifications | Sonner |
+| Component          | Responsibility                                            | shadcn parts                   |
+| ------------------ | --------------------------------------------------------- | ------------------------------ |
+| `App`              | Layout, triggers initial `fetchTasks()`                   | —                              |
+| `WeatherWidget`    | Current weather for a city, change city                   | Card, Input, Popover, Skeleton |
+| `TaskForm`         | Create a task; reused inside edit dialog                  | Input, Textarea, Button        |
+| `TaskFilters`      | All / Active / Completed with counts                      | Tabs                           |
+| `TaskList`         | Renders filtered tasks; loading/empty/error states        | Skeleton                       |
+| `TaskItem`         | Checkbox toggle, title/description, edit & delete actions | Checkbox, Button               |
+| `EditTaskDialog`   | Edit title/description                                    | Dialog                         |
+| `DeleteTaskDialog` | Confirm deletion                                          | AlertDialog                    |
+| Toaster            | Success/error notifications                               | Sonner                         |
 
 ## State (Zustand) — `store/task-store.ts`
 
 ```ts
-type Filter = 'all' | 'active' | 'completed'
+type Filter = 'all' | 'active' | 'completed';
 
 interface TaskState {
-  tasks: Task[]
-  status: 'idle' | 'loading' | 'success' | 'error'
-  error: string | null
-  filter: Filter
+  tasks: Task[];
+  status: 'idle' | 'loading' | 'success' | 'error';
+  error: string | null;
+  filter: Filter;
 
-  fetchTasks(): Promise<void>
-  addTask(input: CreateTaskInput): Promise<void>
-  updateTask(id: string, input: UpdateTaskInput): Promise<void>
-  toggleTask(id: string): Promise<void>      // updateTask with !completed
-  deleteTask(id: string): Promise<void>
-  setFilter(filter: Filter): void
+  fetchTasks(): Promise<void>;
+  addTask(input: CreateTaskInput): Promise<void>;
+  updateTask(id: string, input: UpdateTaskInput): Promise<void>;
+  toggleTask(id: string): Promise<void>; // updateTask with !completed
+  deleteTask(id: string): Promise<void>;
+  setFilter(filter: Filter): void;
 }
 ```
 
@@ -61,12 +61,12 @@ Derived values (filtered list, counts) are computed via selectors, not stored.
 
 ### Update strategy
 
-| Action | Strategy | On failure |
-|---|---|---|
-| Fetch | Show skeleton while loading | Error state with "Retry" button |
-| Add | Wait for server (needs real id); button shows pending state; prepend result | Toast error, keep form input |
-| Toggle / Edit | **Optimistic**: update local state immediately, replace with server result | Roll back to previous task, toast error |
-| Delete | **Optimistic**: remove immediately after confirm | Re-insert at original position, toast error |
+| Action        | Strategy                                                                    | On failure                                  |
+| ------------- | --------------------------------------------------------------------------- | ------------------------------------------- |
+| Fetch         | Show skeleton while loading                                                 | Error state with "Retry" button             |
+| Add           | Wait for server (needs real id); button shows pending state; prepend result | Toast error, keep form input                |
+| Toggle / Edit | **Optimistic**: update local state immediately, replace with server result  | Roll back to previous task, toast error     |
+| Delete        | **Optimistic**: remove immediately after confirm                            | Re-insert at original position, toast error |
 
 The filter is persisted in `localStorage` (wrapped in try/catch).
 

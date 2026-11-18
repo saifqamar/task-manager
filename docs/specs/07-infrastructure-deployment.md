@@ -2,24 +2,29 @@
 
 ## Environments
 
-| Env | Web | API | DB |
-|---|---|---|---|
-| Local | Vite dev server `:5173` (proxies `/api` → `:3000`) | `tsx watch` on host `:3000` | Postgres container via root `docker-compose.yml` `:5432` |
-| CI | build only | tests in runner | Postgres service container |
-| Production | Netlify | Docker container on EC2 | Postgres container on the same EC2 |
+| Env        | Web                                                | API                         | DB                                                                                            |
+| ---------- | -------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| Local      | Vite dev server `:5173` (proxies `/api` → `:3000`) | `tsx watch` on host `:3000` | Locally installed PostgreSQL `:5432` (`taskapp` + `taskapp_test` databases); no Docker needed |
+| CI         | build only                                         | tests in runner             | Postgres service container                                                                    |
+| Production | Netlify                                            | Docker container on EC2     | Postgres container on the same EC2                                                            |
 
 ## Local development
 
+No Docker locally — a natively installed PostgreSQL is used.
+
 ```bash
+# once: role + dev and test databases (CREATEDB is needed for prisma's shadow DB)
+sudo -u postgres psql -c "CREATE ROLE taskapp LOGIN PASSWORD 'taskapp' CREATEDB;" \
+  -c "CREATE DATABASE taskapp OWNER taskapp;" -c "CREATE DATABASE taskapp_test OWNER taskapp;"
+
 cp apps/api/.env.example apps/api/.env   # add OPENWEATHER_API_KEY
-docker compose up -d db                  # Postgres
 pnpm install
-pnpm --filter api db:migrate             # prisma migrate dev
-pnpm --filter api db:seed                # optional
+pnpm --filter @app/api db:migrate        # prisma migrate dev
+pnpm --filter @app/api db:seed           # optional
 pnpm dev                                 # api + web in parallel
 ```
 
-Root `docker-compose.yml` also defines an `api` service (built from `apps/api/Dockerfile`) so reviewers can run the backend with only Docker: `docker compose up`.
+Docker is only used in CI (image build check) and in production on EC2.
 
 ## API Docker image — `apps/api/Dockerfile`
 
@@ -33,15 +38,15 @@ Multi-stage, built from the repo root (needs workspace + `packages/shared`):
 
 ## Production host — EC2
 
-| Item | Value |
-|---|---|
-| Instance | `t3.small` (2 GB RAM) recommended; `t3.micro` works with a 1 GB swap file |
-| OS | Amazon Linux 2023 |
-| Software | Docker Engine + Compose plugin, AWS CLI, SSM agent (preinstalled on AL2023) |
-| Network | Elastic IP (stable address for the Netlify proxy) |
+| Item           | Value                                                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Instance       | `t3.small` (2 GB RAM) recommended; `t3.micro` works with a 1 GB swap file                                                   |
+| OS             | Amazon Linux 2023                                                                                                           |
+| Software       | Docker Engine + Compose plugin, AWS CLI, SSM agent (preinstalled on AL2023)                                                 |
+| Network        | Elastic IP (stable address for the Netlify proxy)                                                                           |
 | Security group | Inbound **80/tcp** from `0.0.0.0/0` only. **No port 22** — shell access via SSM Session Manager. Postgres port not exposed. |
-| Instance role | `AmazonSSMManagedInstanceCore` + `AmazonEC2ContainerRegistryReadOnly` |
-| App dir | `/opt/task-app/` containing `docker-compose.prod.yml`, `deploy.sh`, `.env` (chmod 600) |
+| Instance role  | `AmazonSSMManagedInstanceCore` + `AmazonEC2ContainerRegistryReadOnly`                                                       |
+| App dir        | `/opt/task-app/` containing `docker-compose.prod.yml`, `deploy.sh`, `.env` (chmod 600)                                      |
 
 ### `deploy/docker-compose.prod.yml`
 
@@ -50,7 +55,7 @@ services:
   db:
     image: postgres:<major>-alpine
     restart: unless-stopped
-    env_file: .env                     # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
+    env_file: .env # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck: pg_isready
     # no ports: only reachable on the internal compose network
@@ -58,9 +63,9 @@ services:
   api:
     image: ${ECR_REPO}:${IMAGE_TAG}
     restart: unless-stopped
-    env_file: .env                     # DATABASE_URL, OPENWEATHER_API_KEY, NODE_ENV=production
+    env_file: .env # DATABASE_URL, OPENWEATHER_API_KEY, NODE_ENV=production
     depends_on: { db: { condition: service_healthy } }
-    ports: ["80:3000"]
+    ports: ['80:3000']
     logging: json-file, max-size 10m, max-file 3
 
 volumes:
@@ -83,13 +88,12 @@ Future improvement: move secrets to SSM Parameter Store.
 
 ## Frontend host — Netlify
 
-Connected to GitHub through the Netlify UI (manual, one time). `apps/web/netlify.toml`:
+Connected to GitHub through the Netlify UI (manual, one time). `netlify.toml` lives at the **repo root** so Netlify installs the whole pnpm workspace (the web app depends on `packages/shared`):
 
 ```toml
 [build]
-  base    = "apps/web"
-  command = "pnpm build"           # builds shared + web
-  publish = "dist"
+  command = "pnpm --filter @app/web... build"   # builds shared, then web
+  publish = "apps/web/dist"
 
 [[redirects]]                      # API proxy — must come first
   from   = "/api/*"
@@ -139,12 +143,12 @@ Accepted trade-offs (documented in README): the Netlify→EC2 hop is unencrypted
 
 ### GitHub configuration
 
-| Name | Type | Purpose |
-|---|---|---|
-| `AWS_DEPLOY_ROLE_ARN` | secret | OIDC role to assume |
-| `AWS_REGION` | variable | e.g. `eu-west-1` |
-| `ECR_REPOSITORY` | variable | ECR repo name |
-| `EC2_INSTANCE_ID` | variable | SSM target |
+| Name                  | Type     | Purpose             |
+| --------------------- | -------- | ------------------- |
+| `AWS_DEPLOY_ROLE_ARN` | secret   | OIDC role to assume |
+| `AWS_REGION`          | variable | e.g. `eu-west-1`    |
+| `ECR_REPOSITORY`      | variable | ECR repo name       |
+| `EC2_INSTANCE_ID`     | variable | SSM target          |
 
 ### IAM (least privilege)
 

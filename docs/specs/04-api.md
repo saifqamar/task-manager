@@ -4,14 +4,14 @@ Base path: `/api`. JSON only (`Content-Type: application/json`). Timestamps are 
 
 ## Endpoints
 
-| Method | Path | Request | Success | Errors |
-|---|---|---|---|---|
-| GET | `/health` | — | 200 `{ status: "ok", db: "ok" }` | 503 if DB unreachable |
-| GET | `/api/tasks` | — | 200 `Task[]` (newest first) | — |
-| POST | `/api/tasks` | body `CreateTaskInput` | 201 `Task` | 400 |
-| PATCH | `/api/tasks/:id` | body `UpdateTaskInput` | 200 `Task` | 400, 404 |
-| DELETE | `/api/tasks/:id` | — | 204 (no body) | 400, 404 |
-| GET | `/api/weather?city=<name>` | query `WeatherQuery` | 200 `Weather` | 400, 404, 429, 502 |
+| Method | Path                       | Request                | Success                          | Errors                |
+| ------ | -------------------------- | ---------------------- | -------------------------------- | --------------------- |
+| GET    | `/health`                  | —                      | 200 `{ status: "ok", db: "ok" }` | 503 if DB unreachable |
+| GET    | `/api/tasks`               | —                      | 200 `Task[]` (newest first)      | —                     |
+| POST   | `/api/tasks`               | body `CreateTaskInput` | 201 `Task`                       | 400                   |
+| PATCH  | `/api/tasks/:id`           | body `UpdateTaskInput` | 200 `Task`                       | 400, 404              |
+| DELETE | `/api/tasks/:id`           | —                      | 204 (no body)                    | 400, 404              |
+| GET    | `/api/weather?city=<name>` | query `WeatherQuery`   | 200 `Weather`                    | 400, 404, 429, 502    |
 
 `/health` is outside `/api` so it is not exposed through the Netlify proxy; it is used by Docker healthcheck and the deploy script.
 
@@ -62,17 +62,17 @@ Every non-2xx response has the same shape:
 }
 ```
 
-| HTTP | `code` | When |
-|---|---|---|
-| 400 | `VALIDATION_ERROR` | Body/params/query fail Zod validation (`details` present) |
-| 400 | `BAD_REQUEST` | Malformed JSON, etc. |
-| 404 | `TASK_NOT_FOUND` | Task id does not exist |
-| 404 | `CITY_NOT_FOUND` | OpenWeather has no such city |
-| 404 | `ROUTE_NOT_FOUND` | Unknown route |
-| 429 | `RATE_LIMITED` | Rate limit exceeded |
-| 502 | `UPSTREAM_ERROR` | OpenWeather failed / timed out / bad key |
-| 503 | `SERVICE_UNAVAILABLE` | DB down (health only) |
-| 500 | `INTERNAL_ERROR` | Anything unexpected — generic message, details only in logs |
+| HTTP | `code`                | When                                                        |
+| ---- | --------------------- | ----------------------------------------------------------- |
+| 400  | `VALIDATION_ERROR`    | Body/params/query fail Zod validation (`details` present)   |
+| 400  | `BAD_REQUEST`         | Malformed JSON, etc.                                        |
+| 404  | `TASK_NOT_FOUND`      | Task id does not exist                                      |
+| 404  | `CITY_NOT_FOUND`      | OpenWeather has no such city                                |
+| 404  | `ROUTE_NOT_FOUND`     | Unknown route                                               |
+| 429  | `RATE_LIMITED`        | Rate limit exceeded                                         |
+| 502  | `UPSTREAM_ERROR`      | OpenWeather failed / timed out / bad key                    |
+| 503  | `SERVICE_UNAVAILABLE` | DB down (health only)                                       |
+| 500  | `INTERNAL_ERROR`      | Anything unexpected — generic message, details only in logs |
 
 Internal error messages and stack traces are never returned to clients.
 
@@ -106,9 +106,9 @@ PATCH /api/tasks/6f1c…
 
 ## Rate limits
 
-| Scope | Limit |
-|---|---|
-| Global (per client IP) | 100 requests / minute |
-| `/api/weather` (per client IP) | 30 requests / minute |
+| Scope                          | Limit                 |
+| ------------------------------ | --------------------- |
+| Global (per client IP)         | 100 requests / minute |
+| `/api/weather` (per client IP) | 30 requests / minute  |
 
 Client IP is taken from `X-Forwarded-For` (`trustProxy: true`) because all production traffic arrives via Netlify.
