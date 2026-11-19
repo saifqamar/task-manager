@@ -79,6 +79,8 @@ sudo -u postgres psql \
 
 `CREATEDB` lets `prisma migrate dev` create its temporary shadow database.
 
+> **Troubleshooting:** if `CREATE DATABASE` fails with _"template database template1 has a collation version mismatch"_ (common after an OS upgrade), create the databases from `template0` instead: `CREATE DATABASE taskapp TEMPLATE template0;` (same for `taskapp_test`).
+
 ```bash
 pnpm install
 cp apps/api/.env.example apps/api/.env        # then set OPENWEATHER_API_KEY
