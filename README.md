@@ -178,7 +178,7 @@ Netlify serves the site over HTTPS and proxies `/api/*` to EC2. The browser only
 
 1. **ECR:** create a private repository, e.g. `task-manager-api`.
 2. **GitHub OIDC provider:** IAM → Identity providers → add `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`.
-3. **Deploy role** for GitHub Actions, trusted by that provider and limited to `repo:<owner>/<repo>:ref:refs/heads/main` and the `production` environment. Permissions:
+3. **Deploy role** for GitHub Actions, trusted by that provider and limited to the subject `repo:<owner>/<repo>:environment:production` (jobs that use a GitHub environment get this subject instead of the branch ref). Permissions:
    - ECR push to that one repository (`ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:InitiateLayerUpload`, `ecr:UploadLayerPart`, `ecr:CompleteLayerUpload`, `ecr:PutImage`, `ecr:BatchGetImage`)
    - `ssm:SendCommand` on the instance and on `arn:aws:ssm:<region>::document/AWS-RunShellScript`
    - `ssm:GetCommandInvocation`
