@@ -3,7 +3,8 @@
 
 FROM node:22-alpine AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
-RUN corepack enable
+# openssl: required by Prisma's schema engine (migrations) on Alpine
+RUN apk add --no-cache openssl && corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/api/package.json apps/api/
@@ -25,6 +26,10 @@ FROM base AS runtime
 ENV NODE_ENV=production
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --prod --filter @app/api
+# Prisma downloads its schema engine lazily, which fails at runtime because the
+# container runs as a non-root user. Fetch it now (as root) and fail the build if missing.
+RUN node node_modules/.pnpm/@prisma+engines@*/node_modules/@prisma/engines/scripts/postinstall.js \
+ && ls node_modules/.pnpm/@prisma+engines@*/node_modules/@prisma/engines/schema-engine-linux-musl-*
 WORKDIR /repo/apps/api
 COPY --from=build /repo/apps/api/dist ./dist
 COPY apps/api/prisma ./prisma

@@ -66,5 +66,26 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
+          load: true
+          tags: task-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Start the image against a real Postgres: proves migrations and startup work.
+      - name: Smoke test container
+        run: |
+          docker network create smoke
+          docker run -d --name db --network smoke \
+            -e POSTGRES_USER=taskapp -e POSTGRES_PASSWORD=taskapp -e POSTGRES_DB=taskapp \
+            postgres:17-alpine
+          until docker exec db pg_isready -h 127.0.0.1 -U taskapp -d taskapp >/dev/null 2>&1; do sleep 1; done
+          docker run -d --name api --network smoke -p 3000:3000 \
+            -e DATABASE_URL=postgresql://taskapp:taskapp@db:5432/taskapp \
+            -e OPENWEATHER_API_KEY=ci-placeholder \
+            task-api:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health; then echo; exit 0; fi
+            sleep 2
+          done
+          docker logs api
+          exit 1
