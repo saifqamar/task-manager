@@ -176,10 +176,10 @@ Netlify serves the site over HTTPS and proxies `/api/*` to EC2. The browser only
 <details>
 <summary>Step-by-step</summary>
 
-1. **ECR:** create a private repository, e.g. `task-manager-api`.
+1. **ECR:** create a private repository with mutable tags, e.g. `task-manager-api`, in the same region as the instance.
 2. **GitHub OIDC provider:** IAM → Identity providers → add `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`.
-3. **Deploy role** for GitHub Actions, trusted by that provider and limited to the subject `repo:<owner>/<repo>:environment:production` (jobs that use a GitHub environment get this subject instead of the branch ref). Permissions:
-   - ECR push to that one repository (`ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:InitiateLayerUpload`, `ecr:UploadLayerPart`, `ecr:CompleteLayerUpload`, `ecr:PutImage`, `ecr:BatchGetImage`)
+3. **Deploy role** for GitHub Actions, trusted by that provider and limited to the subject `repo:<owner>/<repo>:environment:production` (jobs that use a GitHub environment get this subject instead of the branch ref). Repositories with GitHub's immutable subject claims send `repo:<owner>@<owner-id>/<repo>@<repo-id>:environment:production` instead; check with `gh api repos/<owner>/<repo>/actions/oidc/customization/sub` and allow both. Permissions:
+   - ECR push to that one repository (`ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:GetDownloadUrlForLayer`, `ecr:InitiateLayerUpload`, `ecr:UploadLayerPart`, `ecr:CompleteLayerUpload`, `ecr:PutImage`, `ecr:BatchGetImage`)
    - `ssm:SendCommand` on the instance and on `arn:aws:ssm:<region>::document/AWS-RunShellScript`
    - `ssm:GetCommandInvocation`
 4. **EC2 instance role** with `AmazonSSMManagedInstanceCore` and `AmazonEC2ContainerRegistryReadOnly`.
