@@ -2,10 +2,9 @@
 
 A small, production-shaped task manager: React + Vite + shadcn/ui + Zustand on the front, Fastify + Prisma + PostgreSQL on the back, with an OpenWeather integration, Docker, and CI/CD to AWS EC2.
 
-|               |                                                                                           |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| **Live demo** | _https://&lt;site&gt;.netlify.app_ (to be added after deployment)                         |
-| **Specs**     | [`docs/specs/`](docs/specs/README.md) — architecture, API contract, deployment, decisions |
+|               |                                                                   |
+| ------------- | ----------------------------------------------------------------- |
+| **Live demo** | _https://&lt;site&gt;.netlify.app_ (to be added after deployment) |
 
 ![App screenshot](docs/screenshots/app.png)
 
@@ -51,8 +50,6 @@ routes → controllers → services → repositories → Prisma → PostgreSQL
 | Controllers  | HTTP only: read request, call service, set status |
 | Services     | Business logic, caching, domain errors            |
 | Repositories | Prisma queries only                               |
-
-More detail: [docs/specs/02-architecture.md](docs/specs/02-architecture.md).
 
 ### Caching
 
@@ -125,7 +122,7 @@ Defined in [`apps/api/prisma/schema.prisma`](apps/api/prisma/schema.prisma).
 
 ## API
 
-Base path `/api`. Full contract: [docs/specs/04-api.md](docs/specs/04-api.md).
+Base path `/api`. Request and response bodies are validated with the Zod schemas in [`packages/shared`](packages/shared/src).
 
 | Method | Path                       | Body                                   | Success       | Errors             |
 | ------ | -------------------------- | -------------------------------------- | ------------- | ------------------ |

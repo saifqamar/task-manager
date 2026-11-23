@@ -8,3 +8,6 @@ coverage/
 .DS_Store
 *.log
 apps/api/src/generated/
+
+# Design specs are kept locally only
+docs/specs/

@@ -1,5 +1,5 @@
 # Production stack on EC2. Used by deploy/deploy.sh.
-# Requires /opt/task-app/.env (see docs/specs/07-infrastructure-deployment.md).
+# Requires /opt/task-app/.env (see "One-time AWS setup" in the README).
 services:
   db:
     image: postgres:17-alpine

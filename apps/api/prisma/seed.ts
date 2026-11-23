@@ -8,7 +8,7 @@ const prisma = createPrismaClient(url);
 const tasks = [
   {
     title: 'Review the project specs',
-    description: 'docs/specs covers architecture, API and deployment',
+    description: 'The README covers architecture, API and deployment',
     completed: true,
   },
   { title: 'Try editing this task', description: 'Click the pencil icon' },
