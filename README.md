@@ -2,9 +2,9 @@
 
 A small, production-shaped task manager: React + Vite + shadcn/ui + Zustand on the front, Fastify + Prisma + PostgreSQL on the back, with an OpenWeather integration, Docker, and CI/CD to AWS EC2.
 
-|               |                                                                   |
-| ------------- | ----------------------------------------------------------------- |
-| **Live demo** | _https://&lt;site&gt;.netlify.app_ (to be added after deployment) |
+|               |                                   |
+| ------------- | --------------------------------- |
+| **Live demo** | https://taskmngr-saif.netlify.app |
 
 ![App screenshot](docs/screenshots/app.png)
 
