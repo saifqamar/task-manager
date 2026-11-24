@@ -7,10 +7,10 @@
   NODE_VERSION = "22"
 
 # API proxy: the browser calls https://<site>.netlify.app/api/* (same origin, HTTPS)
-# and Netlify forwards to the EC2 instance. Replace the IP with your Elastic IP.
+# and Netlify forwards to the API on EC2.
 [[redirects]]
   from = "/api/*"
-  to = "http://EC2_ELASTIC_IP/api/:splat"
+  to = "http://taskmngr.duckdns.org/api/:splat"
   status = 200
   force = true
 

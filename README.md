@@ -204,7 +204,7 @@ Netlify serves the site over HTTPS and proxies `/api/*` to EC2. The browser only
    sudo chmod 600 .env
    ```
 7. **GitHub:** create a `production` environment; add secret `AWS_DEPLOY_ROLE_ARN` and variables `AWS_REGION`, `ECR_REPOSITORY`, `EC2_INSTANCE_ID`. Run **Deploy API** manually once.
-8. **Netlify:** put the Elastic IP into `netlify.toml` (replace `EC2_ELASTIC_IP`), commit, then add the repo in the Netlify UI (it picks up `netlify.toml` automatically).
+8. **Netlify:** set the API address (Elastic IP or a DNS name pointing at it) in the `/api/*` redirect in `netlify.toml`, then connect the repo with `netlify init` or in the Netlify UI (it picks up `netlify.toml` automatically).
 
 </details>
 
